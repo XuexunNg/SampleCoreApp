@@ -111,11 +111,17 @@ namespace SampleApp.Infrastructure
 
             modelBuilder.Entity<Inventory>(entity =>
             {
-      
-
+     
                 entity.Property(e => e.ProductName).HasMaxLength(255);
 
                 entity.Property(e => e.ProductSize).HasMaxLength(255);
+
+            });
+
+            modelBuilder.Entity<InventoryItem>(entity =>
+            {
+
+                entity.Property(e => e.Type).HasMaxLength(255);
 
             });
         }

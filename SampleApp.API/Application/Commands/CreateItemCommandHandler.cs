@@ -22,7 +22,9 @@ namespace SampleApp.API.Application.Commands
 
         public async Task<bool> Handle(CreateItemCommand message, CancellationToken cancellationToken)
         {
-            _inventoryRepository.Add(new Inventory { ProductName = message.ProductName });
+            var inventory = new Inventory(message.ProductName, message.ProductSize);
+            inventory.AddInventoryItem(new InventoryItem() { Type = "thimbdrive" });
+            _inventoryRepository.Add(inventory);
 
             return await _inventoryRepository.UnitOfWork
                 .SaveEntitiesAsync(cancellationToken);

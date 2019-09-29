@@ -12,13 +12,12 @@ namespace SampleApp.API.Application.Commands
         [DataMember]
         public string ProductName { get; set; }
 
+        [DataMember]
+        public string ProductSize { get; set; }
+
         public CreateItemCommand()
         {
         }
 
-        public CreateItemCommand(string productName) : this()
-        {
-            ProductName = productName;
-        }
     }
 }
