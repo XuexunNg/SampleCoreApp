@@ -15,7 +15,8 @@ namespace SampleApp.Infrastructure
     public partial class SampleAppDBContext : DbContext, IUnitOfWork
     { 
 
-        public virtual DbSet<Inventory> Inventory { get; set; }
+        public DbSet<Inventory> Inventory { get; set; }
+        public DbSet<InventoryItem> InventoryItem { get; set; }
 
         private readonly IMediator _mediator;
         private IDbContextTransaction _currentTransaction;
@@ -107,23 +108,7 @@ namespace SampleApp.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasAnnotation("ProductVersion", "2.2.3-servicing-35854");
-
-            modelBuilder.Entity<Inventory>(entity =>
-            {
-     
-                entity.Property(e => e.ProductName).HasMaxLength(255);
-
-                entity.Property(e => e.ProductSize).HasMaxLength(255);
-
-            });
-
-            modelBuilder.Entity<InventoryItem>(entity =>
-            {
-
-                entity.Property(e => e.Type).HasMaxLength(255);
-
-            });
+            
         }
     }
   
@@ -133,7 +118,7 @@ namespace SampleApp.Infrastructure
         public SampleAppDBContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<SampleAppDBContext>()
-                .UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SampleAppDB;Trusted_Connection=True;");
+                .UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SampleCoreAppDB;Trusted_Connection=True;");
 
             return new SampleAppDBContext(optionsBuilder.Options, new NoMediator());
         }

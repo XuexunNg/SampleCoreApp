@@ -8,6 +8,7 @@ namespace SampleApp.Domain.AggregatesModel.InventoryAggregate
     {
         public string Type { get; set; }
 
+        
         public Guid InventoryId { get; set; }
 
 
