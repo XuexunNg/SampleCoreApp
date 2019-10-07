@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -16,9 +18,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SampleApp.API;
+using SampleApp.API.Application.Auth0;
 using SampleApp.API.Infrastructure.AutofacModules;
 using SampleApp.API.Infrastructure.Filters;
 using SampleApp.Infrastructure;
+using Swashbuckle.AspNetCore.Filters;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace SampleApp
 {
@@ -34,7 +39,7 @@ namespace SampleApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            services.AddCustomMvc()
+            services.AddCustomMvc(Configuration)
                 .AddCustomDbContext(Configuration)
                 .AddCustomSwagger(Configuration)
                 .AddCustomConfiguration(Configuration);
@@ -64,8 +69,9 @@ namespace SampleApp
             }
 
             app.UseHttpsRedirection();
+            app.UseAuthentication();
             app.UseMvcWithDefaultRoute();
-
+           
 
             app.UseSwagger()
                .UseSwaggerUI(c =>
@@ -77,16 +83,35 @@ namespace SampleApp
 
     static class CustomExtensionsMethods
     {
-        public static IServiceCollection AddCustomMvc(this IServiceCollection services)
+        public static IServiceCollection AddCustomMvc(this IServiceCollection services, IConfiguration configuration)
         {
+            string domain = $"https://{configuration["Auth0:Domain"]}/";
             // Add framework services.
+           
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.Authority = domain;
+                options.Audience = configuration["Auth0:ApiIdentifier"];
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("read:external", policy => policy.Requirements.Add(new HasScopeRequirement("read:external", domain)));
+            });
+
+            services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
+
             services.AddMvc(options =>
             {
                 options.Filters.Add(typeof(HttpGlobalExceptionFilter));
             })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                .AddControllersAsServices();  //Injecting Controllers themselves thru DI
-                                              //For further info see: http://docs.autofac.org/en/latest/integration/aspnetcore.html#controllers-as-services
+               .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+               .AddControllersAsServices();  //Injecting Controllers themselves thru DI
+                                             //For further info see: http://docs.autofac.org/en/latest/integration/aspnetcore.html#controllers-as-services
 
             services.AddCors(options =>
             {
@@ -142,6 +167,14 @@ namespace SampleApp
                     Description = "The Service HTTP API",
                     TermsOfService = "Terms Of Service"
                 });
+                options.AddSecurityDefinition("oauth2", new ApiKeyScheme
+                {
+                    Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
+                    In = "header",
+                    Name = "Authorization",
+                    Type = "apiKey"
+                });
+                options.OperationFilter<SecurityRequirementsOperationFilter>();
 
             });
 

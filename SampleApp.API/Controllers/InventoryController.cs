@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SampleApp.API.Application.Commands;
 using SampleApp.API.Application.Queries;
@@ -11,6 +12,7 @@ using SampleApp.API.Application.Queries;
 namespace SampleApp.Controllers
 {
     [Route("api/v1/[controller]")]
+    [Authorize]
     [ApiController]
     public class InventoryController : ControllerBase
     {
